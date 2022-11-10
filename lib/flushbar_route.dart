@@ -24,11 +24,7 @@ class FlushbarRoute<T> extends OverlayRoute<T> {
     required this.flushbar,
     RouteSettings? settings,
   })  : _builder = Builder(builder: (BuildContext innerContext) {
-          return GestureDetector(
-            onTap:
-                flushbar.onTap != null ? () => flushbar.onTap!(flushbar) : null,
-            child: flushbar,
-          );
+          return flushbar;
         }),
         _onStatusChanged = flushbar.onStatusChanged,
         super(settings: settings) {
@@ -44,6 +40,24 @@ class FlushbarRoute<T> extends OverlayRoute<T> {
               ? const Alignment(-1.0, -1.0) +
                   Alignment(flushbar.endOffset!.dx, flushbar.endOffset!.dy)
               : const Alignment(-1.0, -1.0);
+          break;
+        }
+      case FlushbarPosition.TOP_RIGHT:
+        {
+          _initialAlignment = const Alignment(1.0, -2.0);
+          _endAlignment = flushbar.endOffset != null
+              ? const Alignment(1.0, -1.0) +
+                  Alignment(flushbar.endOffset!.dx, flushbar.endOffset!.dy)
+              : const Alignment(1.0, -1.0);
+          break;
+        }
+      case FlushbarPosition.RIGHT_TOP:
+        {
+          _initialAlignment = const Alignment(2.0, -1.0);
+          _endAlignment = flushbar.endOffset != null
+              ? const Alignment(1.0, -1.0) +
+                  Alignment(flushbar.endOffset!.dx, flushbar.endOffset!.dy)
+              : const Alignment(1.0, -1.0);
           break;
         }
       case FlushbarPosition.BOTTOM:

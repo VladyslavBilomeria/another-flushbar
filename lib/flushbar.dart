@@ -17,6 +17,7 @@ typedef OnTap = void Function(Flushbar flushbar);
 class Flushbar<T> extends StatefulWidget {
   Flushbar(
       {Key? key,
+      this.builder,
       this.title,
       this.titleColor,
       this.titleSize,
@@ -28,6 +29,7 @@ class Flushbar<T> extends StatefulWidget {
       this.icon,
       this.shouldIconPulse = true,
       this.maxWidth,
+      this.expands = true,
       this.margin = const EdgeInsets.all(0.0),
       this.padding = const EdgeInsets.all(16),
       this.borderRadius,
@@ -67,6 +69,8 @@ class Flushbar<T> extends StatefulWidget {
         super(key: key) {
     onStatusChanged = onStatusChanged ?? (status) {};
   }
+
+  final WidgetBuilder? builder;
 
   /// A callback for you to listen to the different Flushbar status
   final FlushbarStatusCallback? onStatusChanged;
@@ -147,6 +151,9 @@ class Flushbar<T> extends StatefulWidget {
 
   /// Used to limit Flushbar width (usually on large screens)
   final double? maxWidth;
+
+  /// Specifies whether the widget should fill the entire available width
+  final bool expands;
 
   /// Adds a custom margin to Flushbar
   final EdgeInsets margin;
@@ -393,6 +400,7 @@ class _FlushbarState<K extends Object?> extends State<Flushbar<K>>
   @override
   Widget build(BuildContext context) {
     return Align(
+      widthFactor: widget.expands ? null : 1.0,
       heightFactor: 1.0,
       child: Material(
         color: widget.flushbarStyle == FlushbarStyle.FLOATING
@@ -410,19 +418,19 @@ class _FlushbarState<K extends Object?> extends State<Flushbar<K>>
           top: widget.flushbarPosition == FlushbarPosition.TOP,
           left: false,
           right: false,
-          child: _getFlushbar(),
+          child: _getFlushbar(context),
         ),
       ),
     );
   }
 
-  Widget _getFlushbar() {
+  Widget _getFlushbar(BuildContext context) {
     Widget flushbar;
 
     if (widget.userInputForm != null) {
       flushbar = _generateInputFlushbar();
     } else {
-      flushbar = _generateFlushbar();
+      flushbar = _generateFlushbar(context);
     }
 
     return Stack(
@@ -454,7 +462,10 @@ class _FlushbarState<K extends Object?> extends State<Flushbar<K>>
             return _emptyWidget;
           },
         ),
-        flushbar,
+        GestureDetector(
+          onTap: widget.onTap != null ? () => widget.onTap!(widget) : null,
+          child: flushbar,
+        ),
       ],
     );
   }
@@ -486,7 +497,23 @@ class _FlushbarState<K extends Object?> extends State<Flushbar<K>>
     );
   }
 
-  Widget _generateFlushbar() {
+  Widget _generateFlushbar(BuildContext context) {
+    Widget child;
+    if (widget.builder != null) {
+      child = widget.builder!(context);
+    } else {
+      child = Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildProgressIndicator(),
+          Row(
+            mainAxisSize: MainAxisSize.max,
+            children: _getAppropriateRowLayout(),
+          ),
+        ],
+      );
+    }
+
     return Container(
       key: _backgroundBoxKey,
       constraints: widget.maxWidth != null
@@ -501,16 +528,7 @@ class _FlushbarState<K extends Object?> extends State<Flushbar<K>>
             ? Border.all(color: widget.borderColor!, width: widget.borderWidth)
             : null,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildProgressIndicator(),
-          Row(
-            mainAxisSize: MainAxisSize.max,
-            children: _getAppropriateRowLayout(),
-          ),
-        ],
-      ),
+      child: child,
     );
   }
 
@@ -774,7 +792,7 @@ class _FlushbarState<K extends Object?> extends State<Flushbar<K>>
 }
 
 /// Indicates if flushbar is going to start at the [TOP] or at the [BOTTOM]
-enum FlushbarPosition { TOP, BOTTOM }
+enum FlushbarPosition { TOP, TOP_RIGHT, RIGHT_TOP, BOTTOM }
 
 /// Indicates if flushbar will be attached to the edge of the screen or not
 enum FlushbarStyle { FLOATING, GROUNDED }
